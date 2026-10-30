@@ -1,0 +1,11 @@
+# Image data and derived outputs stay out of git
+data/raw/*
+data/interim/*
+data/processed/*
+!data/*/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
