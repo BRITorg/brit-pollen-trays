@@ -22,8 +22,8 @@ rests on a handful of images rather than a measurement over all of them, it says
 
 ## Pipeline
 
-1. **Download** the JPGs from Dropbox (`scripts/download_dropbox.sh`; CR2 raw files are
-   excluded).
+1. **Images.** The 129 JPGs are in `data/raw/` in this repo. They came from BRIT's
+   Dropbox (`scripts/download_dropbox.sh`; CR2 raw files are excluded).
 2. **Manifest** (`pollen-manifest`): path, size, dimensions and SHA-256 per image.
 3. **Textract, two passes per image** (`pollen-textract`, AWS Textract
    `DetectDocumentText`, synchronous API, JPEG/PNG up to 10 MB):
@@ -190,8 +190,7 @@ Roughly in order of expected value, none yet done:
 ## Reproducing
 
 ```bash
-uv sync
-scripts/download_dropbox.sh "<Dropbox folder>"       # JPGs only
+uv sync                                              # images are already in data/raw
 uv run pollen-manifest
 aws sso login --sso-session <your-session>          # whatever your AWS SSO setup is
 uv run pollen-textract --profile <aws-profile> --rotations 0 90
@@ -210,5 +209,6 @@ institution's policy before running it on new material.
 - Everything above is from one batch of 129 images from one station and one month.
 - Coordinates and slide geometry assume the current tray design (2 columns x 10 rows,
   stickers vertical).
-- `data/` (images and outputs) is not in git; collaborators need their own download and
-  AWS access.
+- `data/raw/` (the images) is in git, but outputs in `data/interim/` and `data/processed/`
+  are not, including the Textract responses. Re-running `pollen-textract` needs your own
+  AWS access; ask the maintainers for the zipped responses to skip it.
