@@ -137,7 +137,8 @@ at twice the pages. Not adopted: it doubles the cost and splits any text that cr
 Registering each tray and cropping a fixed grid gave confidently wrong fits on many
 images (47 of 249 tray fits scored below our own reliability cutoff, and the worst
 overlapped). See "Why OCR anchors instead of segmenting and cropping slides" above.
-The prototype is not in the repo.
+The last prototype is in `experiments/grid_registration.py`, kept for comparison with future
+segmentation attempts.
 
 ### Handwriting
 Textract reports `TextType: HANDWRITING` on WORD blocks, not LINE blocks; a line is
