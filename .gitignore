@@ -2,6 +2,11 @@
 data/interim/*
 data/processed/*
 !data/*/.gitkeep
+# ...except the slot table and the viewer's slide crops
+!data/processed/slots.csv
+!data/processed/viewer/
+data/processed/viewer/*
+!data/processed/viewer/crops/
 
 # Python
 .venv/

@@ -16,7 +16,8 @@ accuracy and the open issues.
 ## Layout
 
 - `data/raw/` — the 129 source JPGs, tracked in git (6 session folders, ~837 MB)
-- `data/interim/`, `data/processed/` — derived outputs, not tracked in git
+- `data/interim/`, `data/processed/` — derived outputs, not tracked in git, except
+  `data/processed/slots.csv` and the viewer crops in `data/processed/viewer/crops/`
 - `src/brit_pollen_trays/`
   - `manifest.py` — index of the images (size, dimensions, checksum)
   - `textract.py` — runs Textract passes and caches the raw responses
@@ -44,14 +45,17 @@ uv run pollen-viewer                             # -> data/processed/viewer/inde
 expires, so it is safe to interrupt and rerun. Images are sent to AWS and billed per page
 (this dataset is 258 pages, well under $1), so check your data-sharing policy first.
 
-`pollen-viewer` writes a crop per slide (~96 MB, not tracked in git) and a page you open in
-a browser, with no server needed. Each slide shows beside its ID and OCR text, with the
+`pollen-viewer` writes a crop per slide (~96 MB; the crops are tracked in git, the page is
+not) and a page you open in a browser, with no server needed. Each slide shows beside its ID and OCR text, with the
 estimated slide window drawn on the crop. Filter to likely errors (no label, hand-drawn
 number disagrees, low ID confidence), mark rows correct or wrong, enter corrected text, and
 export your review as CSV. Reviews are kept in your browser, so export before clearing it.
 
-To skip the OCR step, ask the maintainers for the zipped Textract responses, unzip them
-into `data/interim/`, and run `pollen-slots` directly.
+`slots.csv` and the crops are committed, so you can run `uv run pollen-viewer` straight after
+cloning to get the page. To rebuild `slots.csv` without re-running OCR, ask the maintainers
+for the zipped Textract responses, unzip them into `data/interim/`, and run `pollen-slots`.
+Regenerating the crops changes ~95 MB of tracked files, so avoid committing them again
+unless the slots or crop logic changed.
 
 ## Output
 
