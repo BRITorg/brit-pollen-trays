@@ -1,5 +1,4 @@
-# Image data and derived outputs stay out of git
-data/raw/*
+# Source images (data/raw) are tracked; derived outputs stay out of git
 data/interim/*
 data/processed/*
 !data/*/.gitkeep
