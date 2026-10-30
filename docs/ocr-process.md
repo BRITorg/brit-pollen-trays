@@ -186,6 +186,18 @@ Roughly in order of expected value, none yet done:
    on the validation set before committing to one.
 7. **Image preprocessing** (contrast, deskew, glare reduction on the aluminum) is
    untested.
+8. **COCO export of image regions.** Write a COCO JSON with one bounding box per slide,
+   sticker ID and label-text region (OCR text and confidence as extra attributes). Useful
+   for (a) loading our boxes into an annotation tool such as CVAT, Label Studio or
+   Roboflow as pre-annotations that people correct, and (b) training or fine-tuning a
+   detector or segmenter to replace the anchor-window estimate behind the bleed in
+   idea 1. Cautions: our slide boxes are estimates, not detected edges, so they should be
+   human-corrected before training on them; we have boxes only, no polygons or masks
+   (those would need a model such as SAM, or manual drawing); and all images are stored
+   rotated 180 degrees with an EXIF tag, which some loaders apply and others ignore, so
+   the file must state whether boxes are in stored-pixel or upright coordinates (or ship
+   upright copies of the images). Not needed if the goal is only the slot table and label
+   text.
 
 ## Reproducing
 

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pollen slide label check</title>
+<style>
+  :root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --mute:#6b6b66; --line:#ddddd7; --accent:#0b6bcb; --ok:#1a7f37; --bad:#c62828; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161615; --card:#222221; --ink:#ececea; --mute:#9c9c96; --line:#3a3a38; --accent:#5aa9ff; --ok:#4cc26a; --bad:#ff6b6b; }
+  }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui,sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:12px 16px; }
+  h1 { font-size:18px; margin:0 0 8px; }
+  .filters { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; }
+  .filters label { display:flex; gap:5px; align-items:center; white-space:nowrap; }
+  select, input[type=search], textarea, button { font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:5px 8px; }
+  button { cursor:pointer } button:hover { border-color:var(--accent) }
+  .bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:8px; color:var(--mute); }
+  main { padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,640px),1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .card.ok { border-color:var(--ok) } .card.bad { border-color:var(--bad) }
+  .card img { width:100%; height:auto; border-radius:6px; background:#0001; display:block; }
+  .meta { color:var(--mute); font-size:13px; display:flex; flex-wrap:wrap; gap:4px 12px; }
+  .meta b { color:var(--ink) }
+  .flag { color:var(--bad) }
+  .ocr { white-space:pre-wrap; font:14px/1.4 ui-monospace,monospace; background:var(--bg); border-radius:6px; padding:8px; min-height:2.4em; }
+  .ocr.empty { color:var(--mute); font-style:italic }
+  .review { display:flex; gap:8px; align-items:flex-start; }
+  .review textarea { flex:1; min-height:2.4em; resize:vertical }
+  .ok-btn.on { background:var(--ok); color:#fff; border-color:var(--ok) }
+  .bad-btn.on { background:var(--bad); color:#fff; border-color:var(--bad) }
+  .legend { font-size:13px; color:var(--mute) }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:50%; vertical-align:middle }
+  @media (max-width:520px) { main { padding:10px } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pollen slide label check</h1>
+  <div class="filters">
+    <label>Session <select id="session"><option value="">all</option></select></label>
+    <label>Review <select id="status"><option value="">all</option><option value="none">unreviewed</option><option value="ok">correct</option><option value="bad">wrong</option></select></label>
+    <input type="search" id="q" placeholder="search label, ID or image" size="24">
+    <label><input type="checkbox" id="f-empty"> no label</label>
+    <label><input type="checkbox" id="f-disagree"> hand # disagrees</label>
+    <label><input type="checkbox" id="f-hw"> handwriting</label>
+    <label><input type="checkbox" id="f-low"> ID conf &lt; 80</label>
+    <label><input type="checkbox" id="f-cw"> text from rotated pass</label>
+  </div>
+  <div class="bar">
+    <span id="count"></span>
+    <button id="prev">Prev</button><span id="page"></span><button id="next">Next</button>
+    <button id="export">Export reviewed (CSV)</button>
+    <span class="legend"><i style="background:#00c8ff"></i> slide window edges &nbsp; <i style="background:#ff2828"></i> sticker ID position</span>
+  </div>
+</header>
+<main id="list"></main>
+<script>
+const DATA = /*__DATA__*/[];
+const PAGE = 24, KEY = "pollen-label-review-v1";
+let review = {};
+try { review = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(review)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+const rid = r => r.image + "|" + r.id;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+[...new Set(DATA.map(r => r.session))].sort().forEach(v => $("session").add(new Option(v, v)));
+
+let page = 0, rows = [];
+function filter() {
+  const q = $("q").value.trim().toLowerCase(), st = $("status").value;
+  rows = DATA.filter(r => {
+    if ($("session").value && r.session !== $("session").value) return false;
+    if ($("f-empty").checked && r.text) return false;
+    if ($("f-disagree").checked && r.agree !== false) return false;
+    if ($("f-hw").checked && !r.hw) return false;
+    if ($("f-low").checked && r.idc >= 80) return false;
+    if ($("f-cw").checked && r.pass !== "cw90") return false;
+    if (q && !(r.text.toLowerCase().includes(q) || r.id.includes(q) || r.image.toLowerCase().includes(q))) return false;
+    const s = (review[rid(r)] || {}).status || "none";
+    return !st || s === st;
+  });
+  page = 0; render();
+}
+function render() {
+  const pages = Math.max(Math.ceil(rows.length / PAGE), 1);
+  page = Math.min(page, pages - 1);
+  $("count").textContent = rows.length + " of " + DATA.length + " slots";
+  $("page").textContent = "page " + (page + 1) + " / " + pages;
+  $("list").innerHTML = rows.slice(page * PAGE, (page + 1) * PAGE).map(r => {
+    const v = review[rid(r)] || {};
+    const hand = r.hand === null ? "" : `<span class="${r.agree === false ? "flag" : ""}">hand # <b>${r.hand}</b>${r.agree === false ? " (≠ ID)" : ""}</span>`;
+    return `<article class="card ${v.status || ""}" data-id="${esc(rid(r))}">
+      <img loading="lazy" src="${esc(r.crop)}" alt="slide ${esc(r.id)}">
+      <div class="meta"><span><b>${esc(r.id)}</b></span><span>tray ${esc(r.tray)} · slot <b>${r.slot}</b></span>
+        <span>ID conf ${r.idc.toFixed(0)}</span>${hand}<span>${r.hw ? "handwriting · " : ""}${esc(r.pass)}</span><span>${esc(r.image)}</span></div>
+      <div class="ocr ${r.text ? "" : "empty"}">${r.text ? esc(r.text) : "(no label text found)"}</div>
+      <div class="review">
+        <button class="ok-btn ${v.status === "ok" ? "on" : ""}" data-act="ok">✓ correct</button>
+        <button class="bad-btn ${v.status === "bad" ? "on" : ""}" data-act="bad">✗ wrong</button>
+        <textarea placeholder="corrected label text (optional)">${esc(v.text || "")}</textarea>
+      </div></article>`;
+  }).join("");
+}
+$("list").addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const card = b.closest(".card"), id = card.dataset.id, cur = review[id] || {};
+  cur.status = cur.status === b.dataset.act ? undefined : b.dataset.act;
+  review[id] = cur; save();
+  card.className = "card " + (cur.status || "");
+  card.querySelector(".ok-btn").classList.toggle("on", cur.status === "ok");
+  card.querySelector(".bad-btn").classList.toggle("on", cur.status === "bad");
+});
+$("list").addEventListener("input", e => {
+  if (e.target.tagName !== "TEXTAREA") return;
+  const id = e.target.closest(".card").dataset.id;
+  review[id] = Object.assign(review[id] || {}, { text: e.target.value }); save();
+});
+["session","status"].forEach(i => $(i).addEventListener("change", filter));
+["q","f-empty","f-disagree","f-hw","f-low","f-cw"].forEach(i => $(i).addEventListener("input", filter));
+$("prev").onclick = () => { page = Math.max(page - 1, 0); render(); scrollTo(0, 0); };
+$("next").onclick = () => { page++; render(); scrollTo(0, 0); };
+$("export").onclick = () => {
+  const q = s => '"' + String(s ?? "").replace(/"/g, '""') + '"';
+  const out = [["image","sticker_id","status","ocr_text","corrected_text"].join(",")];
+  for (const r of DATA) {
+    const v = review[rid(r)]; if (!v || (!v.status && !v.text)) continue;
+    out.push([r.image, r.id, v.status || "", r.text, v.text || ""].map(q).join(","));
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([out.join("\n")], { type: "text/csv" }));
+  a.download = "label_review.csv"; a.click();
+};
+filter();
+</script>
+</body>
+</html>
