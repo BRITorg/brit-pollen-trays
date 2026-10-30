@@ -5,8 +5,10 @@ then segmentation and OCR.
 
 ## Layout
 
-- `scripts/download_dropbox.sh` — sync images from Dropbox with rclone
-- `src/brit_pollen_trays/` — package code (manifest, later segmentation and OCR)
+- `scripts/download_dropbox.sh` — sync JPGs from Dropbox with rclone (CR2 excluded)
+- `src/brit_pollen_trays/` — `manifest.py` (image index), `textract.py` (OCR passes),
+  `slots.py` (per-slide table)
+- `docs/ocr-process.md` — how OCR works here, what we tried, accuracy and open issues
 - `data/raw/` — downloaded images (not tracked in git)
 - `data/interim/`, `data/processed/` — derived outputs (not tracked in git)
 - `notebooks/` — exploration
@@ -15,19 +17,14 @@ then segmentation and OCR.
 
 ```bash
 uv sync
-rclone config                                   # once: add a "dropbox" remote
 scripts/download_dropbox.sh "<Dropbox folder>" --dry-run
 scripts/download_dropbox.sh "<Dropbox folder>"
-uv run pollen-manifest                          # writes data/interim/manifest.csv
+uv run pollen-manifest                                  # data/interim/manifest.csv
+uv run pollen-textract --profile <aws-profile>          # two passes, cached JSON
+uv run pollen-slots                                     # data/processed/slots.csv
 ```
 
-OCR uses the system `tesseract` binary via `pytesseract`.
-
-## Textract (handwriting / small text)
-
-```bash
-uv run pollen-textract --limit 5     # try a few first; responses cached in data/interim/textract/
-```
-
-Needs AWS credentials (`aws configure` or SSO). Images are sent to AWS, and
-Textract is billed per page, so check pricing and data-sharing policy first.
+Needs `rclone` with a Dropbox remote (`rclone config`), AWS credentials with Textract
+access, and Python 3.11+ with [uv](https://docs.astral.sh/uv/). Images are sent to AWS
+Textract and billed per page, so check your data-sharing policy first. See
+`docs/ocr-process.md` for details and current accuracy.

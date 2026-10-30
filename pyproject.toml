@@ -20,6 +20,7 @@ dev = ["jupyterlab", "pytest"]
 [project.scripts]
 pollen-manifest = "brit_pollen_trays.manifest:main"
 pollen-textract = "brit_pollen_trays.textract:main"
+pollen-slots = "brit_pollen_trays.slots:main"
 
 [build-system]
 requires = ["hatchling"]
