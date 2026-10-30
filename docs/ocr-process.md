@@ -235,4 +235,4 @@ institution's policy before running it on new material.
   stickers vertical).
 - `data/raw/` (the images) is in git, but outputs in `data/interim/` and `data/processed/`
   are not, including the Textract responses. Re-running `pollen-textract` needs your own
-  AWS access; ask the maintainers for the zipped responses to skip it.
+  AWS access; the cached responses are attached to the `textract-2019-07-v1` GitHub release.

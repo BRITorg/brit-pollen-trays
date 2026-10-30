@@ -53,8 +53,15 @@ estimated slide window drawn on the crop. Filter to likely errors (no label, han
 number disagrees, low ID confidence), mark rows correct or wrong, enter corrected text, and
 export your review as CSV. Reviews are kept in your browser, so export before clearing it.
 
-`slots.csv`, the crops and the page are committed. To rebuild `slots.csv` without re-running OCR, ask the maintainers
-for the zipped Textract responses, unzip them into `data/interim/`, and run `pollen-slots`.
+`slots.csv`, the crops and the page are committed. To rebuild `slots.csv` without re-running OCR, download the cached Textract responses from
+the [`textract-2019-07-v1` release](https://github.com/BRITorg/brit-pollen-trays/releases/tag/textract-2019-07-v1)
+(private repo, so you need access), unzip them into `data/interim/`, and run `pollen-slots`:
+
+```bash
+gh release download textract-2019-07-v1 -p textract_responses.zip
+unzip textract_responses.zip -d data/interim/
+uv run pollen-slots
+```
 Regenerating the crops changes ~95 MB of tracked files, so avoid committing them again
 unless the slots or crop logic changed.
 
