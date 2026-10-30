@@ -25,6 +25,7 @@ BAND_PAD = 0.006      # extra vertical context beyond the row band (normalised)
 
 
 def crop_slot(im: Image.Image, row: pd.Series) -> Image.Image:
+    # TODO: crops use a fixed band and the estimated slide window; see idea 9 in docs/ocr-process.md.
     W, H = im.size
     x0 = (row.id_x + row.slide_offset) * W
     w = row.slide_width * W

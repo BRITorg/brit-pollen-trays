@@ -21,6 +21,7 @@ accuracy and the open issues.
   - `manifest.py` — index of the images (size, dimensions, checksum)
   - `textract.py` — runs Textract passes and caches the raw responses
   - `slots.py` — builds the per-slide table from the cached responses
+  - `viewer.py` — builds a static HTML page for checking labels against slide crops
 - `docs/ocr-process.md` — OCR method, evidence, accuracy and ideas for improvement
 - `scripts/download_dropbox.sh` — optional: re-sync the JPGs from BRIT's Dropbox with
   rclone (CR2 raw files excluded). Not needed, since the images are in the repo.
@@ -35,12 +36,19 @@ uv sync
 uv run pollen-manifest                           # -> data/interim/manifest.csv
 uv run pollen-textract --profile <aws-profile>   # -> data/interim/textract/*.json
 uv run pollen-slots                              # -> data/processed/slots.csv
+uv run pollen-viewer                             # -> data/processed/viewer/index.html
 ```
 
 `pollen-textract` needs AWS credentials with Textract access. It runs two passes per image
 (upright and rotated 90°), skips pages already cached, and stops cleanly if your SSO token
 expires, so it is safe to interrupt and rerun. Images are sent to AWS and billed per page
 (this dataset is 258 pages, well under $1), so check your data-sharing policy first.
+
+`pollen-viewer` writes a crop per slide (~96 MB, not tracked in git) and a page you open in
+a browser, with no server needed. Each slide shows beside its ID and OCR text, with the
+estimated slide window drawn on the crop. Filter to likely errors (no label, hand-drawn
+number disagrees, low ID confidence), mark rows correct or wrong, enter corrected text, and
+export your review as CSV. Reviews are kept in your browser, so export before clearing it.
 
 To skip the OCR step, ask the maintainers for the zipped Textract responses, unzip them
 into `data/interim/`, and run `pollen-slots` directly.

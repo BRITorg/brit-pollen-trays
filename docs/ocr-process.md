@@ -199,6 +199,17 @@ Roughly in order of expected value, none yet done:
    upright copies of the images). Not needed if the goal is only the slot table and label
    text.
 
+9. **TODO: better slide crops for the QC viewer.** Crops are currently a fixed-height
+   band around the sticker ID, with left and right edges taken from the estimated slide
+   window (anchor spacing plus a per-image offset). The window is an estimate, so a crop
+   may include part of the neighbouring slide or cut off part of its own, which makes
+   label bleed harder to judge by eye. We have only spot-checked a few crops, so how
+   often this happens is unmeasured.
+   Options: detect the slide's glass edges directly (e.g. line or rectangle detection),
+   fit a window per slide instead of one offset per image, correct for small tray
+   rotation, or use boxes corrected through the COCO round trip in idea 8. Related to
+   idea 4, which also needs accurate per-slide crops.
+
 ## Reproducing
 
 ```bash
